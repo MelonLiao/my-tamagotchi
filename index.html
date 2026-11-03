@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的專屬電子寵物</title>
+    <style>
+        :root {
+            --primary-color: #ff85a1;
+            --secondary-color: #ffb3c6;
+            --bg-color: #fff0f3;
+            --card-bg: #ffffff;
+            --text-color: #4a4a4a;
+        }
+
+        body {
+            font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            user-select: none;
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 400px;
+            background: var(--card-bg);
+            border-radius: 24px;
+            box-shadow: 0 10px 25px rgba(255, 133, 161, 0.2);
+            overflow: hidden;
+            border: 4px solid var(--secondary-color);
+            display: flex;
+            flex-direction: column;
+            height: 90vh;
+            max-height: 700px;
+        }
+
+        .screen {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            overflow-y: auto;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* 歡迎/創角畫面 */
+        .welcome-screen h1 {
+            color: var(--primary-color);
+            font-size: 24px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .welcome-screen p {
+            font-size: 14px;
+            color: #888;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .pet-selector {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .pet-option {
+            background: #fff;
+            border: 3px solid #eee;
+            border-radius: 16px;
+            padding: 10px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+            width: 90px;
+        }
+
+        .pet-option.selected {
+            border-color: var(--primary-color);
+            background: var(--bg-color);
+            transform: scale(1.05);
+        }
+
+        .pet-option img, .pet-avatar-large {
+            font-size: 40px;
+            margin-bottom: 5px;
+        }
+
+        .input-group {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 14px;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 12px;
+            font-size: 16px;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .input-group input:focus {
+            border-color: var(--primary-color);
+        }
+
+        .btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(255, 133, 161, 0.4);
+            transition: transform 0.1s, background 0.2s;
+            width: 100%;
+        }
+
+        .btn:active {
+            transform: scale(0.96);
+        }
+
+        /* 遊戲主畫面 */
+        .status-header {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            background: var(--bg-color);
+            padding: 12px;
+            border-radius: 16px;
+            box-sizing: border-box;
+        }
+
+        .status-bar-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .status-bar {
+            flex: 1;
+            height: 10px;
+            background: #e0e0e0;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .status-fill {
+            height: 100%;
+            width: 100%;
+            background: #4caf50;
+            transition: width 0.3s, background 0.3s;
+        }
+
+        .pet-stage {
+            text-align: center;
+            margin: 10px 0;
+            position: relative;
+        }
+
+        .pet-avatar {
+            font-size: 80px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            display: inline-block;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .pet-avatar:active {
+            transform: scale(1.2) rotate(10deg);
+        }
+
+        .pet-name-tag {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-top: 5px;
+        }
+
+        .pet-message {
+            background: white;
+            border: 2px solid var(--secondary-color);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            margin-top: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            min-height: 20px;
+            text-align: center;
+        }
+
+        /* 控制面板按鈕 */
+        .action-panel {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .action-btn {
+            background: white;
+            border: 2px solid var(--secondary-color);
+            padding: 10px;
+            border-radius: 14px;
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--text-color);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            background: var(--bg-color);
+            border-color: var(--primary-color);
+        }
+
+        /* 選單彈窗 */
+        .modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 20px;
+            width: 80%;
+            max-width: 300px;
+            text-align: center;
+            border: 3px solid var(--primary-color);
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .modal-buttons button {
+            flex: 1;
+            padding: 8px;
+            border-radius: 10px;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .btn-confirm { background: var(--primary-color); color: white; }
+        .btn-cancel { background: #ddd; color: #555; }
+
+        /* 小遊戲專用畫面 */
+        #game-canvas-container {
+            position: relative;
+            width: 100%;
+            height: 180px;
+            background: #eef2f5;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .falling-item {
+            position: absolute;
+            font-size: 28px;
+            cursor: pointer;
+            user-select: none;
+            transition: transform 0.1s;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-container">
+        <!-- 畫面一：創角與命名 -->
+        <div id="setup-screen" class="screen">
+            <div>
+                <h1>🐣 打造你的專屬寵物</h1>
+                <p>幫牠選一個可愛的外觀，並取個好名字吧！</p>
+                
+                <div style="font-weight: bold; font-size: 14px; margin-bottom: 8px;">選擇外觀：</div>
+                <div class="pet-selector">
+                    <div class="pet-option selected" onclick="selectPetType('🐥', '小雞', '#ff85a1', '#ffb3c6', '#fff0f3')" data-type="0">
+                        <div style="font-size: 36px;">🐥</div>
+                        <div style="font-size: 12px;">萌萌小雞</div>
+                    </div>
+                    <div class="pet-option" onclick="selectPetType('🐰', '小兔', '#b5e2fa', '#d9effc', '#f0f8ff')" data-type="1">
+                        <div style="font-size: 36px;">🐰</div>
+                        <div style="font-size: 12px;">軟萌小兔</div>
+                    </div>
+                    <div class="pet-option" onclick="selectPetType('🐱', '小貓', '#ffdab9', '#ffe4c4', '#fffaf0')" data-type="2">
+                        <div style="font-size: 36px;">🐱</div>
+                        <div style="font-size: 12px;">Ｑ彈小貓</div>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="pet-name-input">寵物名字：</label>
+                    <input type="text" id="pet-name-input" placeholder="輸入寵物名字..." maxlength="10">
+                </div>
+            </div>
+
+            <button class="btn" onclick="initGame()">開始領養！ 🎉</button>
+        </div>
+
+        <!-- 畫面二：遊戲主畫面 -->
+        <div id="main-screen" class="screen hidden">
+            <!-- 狀態列 -->
+            <div class="status-header">
+                <div class="status-bar-container">
+                    <span>💖 飽足</span>
+                    <div class="status-bar"><div id="bar-hunger" class="status-fill"></div></div>
+                </div>
+                <div class="status-bar-container">
+                    <span>⭐ 快樂</span>
+                    <div class="status-bar"><div id="bar-happy" class="status-fill"></div></div>
+                </div>
+                <div class="status-bar-container">
+                    <span>💤 體力</span>
+                    <div class="status-bar"><div id="bar-energy" class="status-fill"></div></div>
+                </div>
+                <div class="status-bar-container">
+                    <span>🧼 清潔</span>
+                    <div class="status-bar"><div id="bar-clean" class="status-fill"></div></div>
+                </div>
+            </div>
+
+            <!-- 寵物互動區 -->
+            <div class="pet-stage">
+                <div id="pet-avatar" class="pet-avatar" onclick="petClick()">🐥</div>
+                <div id="pet-name-display" class="pet-name-tag">寶貝</div>
+                <div id="pet-message" class="pet-message">今天也要開心玩耍唷！</div>
+            </div>
+
+            <!-- 接星星小遊戲畫布區 -->
+            <div id="game-canvas-container">
+                <div style="position: absolute; top: 5px; left: 10px; font-size: 12px; font-weight: bold; color: #555;">⭐ 點擊落下的小星星！ (<span id="game-score">0</span>分)</div>
+            </div>
+
+            <!-- 操作按鈕 -->
+            <div class="action-panel">
+                <button class="action-btn" onclick="openFeedMenu()">🍓 餵食</button>
+                <button class="action-btn" onclick="startMiniGame()">🎮 玩遊戲</button>
+                <button class="action-btn" onclick="toggleSleep()">💤 睡覺</button>
+                <button class="action-btn" onclick="cleanPoop()">🧹 打掃</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 餵食選單 Modal -->
+    <div id="feed-modal" class="modal hidden">
+        <div class="modal-content">
+            <h3>選擇食物</h3>
+            <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 15px;">
+                <button class="action-btn" onclick="feedPet(15, '蛋糕 🍰 (飽足感大增！)')">🍰 精緻小蛋糕 (+15)</button>
+                <button class="action-btn" onclick="feedPet(10, '草莓 🍓 (酸甜好滋味)')">🍓 新鮮草莓 (+10)</button>
+                <button class="action-btn" onclick="feedPet(5, '青菜 🥬 (健康營養)')">🥬 健康蔬菜 (+5)</button>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn-cancel" onclick="closeFeedMenu()">返回</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 遊戲資料結構
+        let pet = {
+            name: "寶貝",
+            avatar: "🐥",
+            hunger: 80,
+            happy: 80,
+            energy: 80,
+            clean: 80,
+            isSleeping: false,
+            primaryColor: "#ff85a1",
+            secondaryColor: "#ffb3c6",
+            bgColor: "#fff0f3"
+        };
+
+        let selectedAvatar = "🐥";
+        let selectedName = "小雞";
+        let pColor = "#ff85a1";
+        let sColor = "#ffb3c6";
+        let bColor = "#fff0f3";
+
+        // 選擇外觀
+        function selectPetType(avatar, name, primary, secondary, bg) {
+            selectedAvatar = avatar;
+            selectedName = name;
+            pColor = primary;
+            sColor = secondary;
+            bColor = bg;
+
+            document.querySelectorAll('.pet-option').forEach(el => el.classList.remove('selected'));
+            event.currentTarget.classList.add('selected');
+        }
+
+        // 初始化遊戲
+        function initGame() {
+            const inputName = document.getElementById('pet-name-input').value.trim();
+            if (inputName) {
+                pet.name = inputName;
+            } else {
+                pet.name = selectedName;
+            }
+
+            pet.avatar = selectedAvatar;
+            pet.primaryColor = pColor;
+            pet.secondaryColor = sColor;
+            pet.bgColor = bColor;
+
+            // 套用顏色主題
+            document.documentElement.style.setProperty('--primary-color', pet.primaryColor);
+            document.documentElement.style.setProperty('--secondary-color', pet.secondaryColor);
+            document.documentElement.style.setProperty('--bg-color', pet.bgColor);
+
+            saveData();
+
+            document.getElementById('setup-screen').classList.add('hidden');
+            document.getElementById('main-screen').classList.remove('hidden');
+
+            updateUI();
+        }
+
+        // 更新介面數值
+        function updateUI() {
+            document.getElementById('bar-hunger').style.width = pet.hunger + '%';
+            document.getElementById('bar-happy').style.width = pet.happy + '%';
+            document.getElementById('bar-energy').style.width = pet.energy + '%';
+            document.getElementById('bar-clean').style.width = pet.clean + '%';
+
+            // 數值顏色變化
+            setBarColor('bar-hunger', pet.hunger);
+            setBarColor('bar-happy', pet.happy);
+            setBarColor('bar-energy', pet.energy);
+            setBarColor('bar-clean', pet.clean);
+
+            document.getElementById('pet-name-display').innerText = pet.name;
+            document.getElementById('pet-avatar').innerText = pet.isSleeping ? '💤' : pet.avatar;
+        }
+
+        function setBarColor(barId, value) {
+            const el = document.getElementById(barId);
+            if (value > 50) el.style.background = '#4caf50';
+            else if (value > 20) el.style.background = '#ff9800';
+            else el.style.background = '#f44336';
+        }
+
+        // 點擊寵物互動
+        function petClick() {
+            if (pet.isSleeping) {
+                showMsg('Zzz... 牠正在睡覺別吵醒牠！');
+                return;
+            }
+            pet.happy = Math.min(100, pet.happy + 3);
+            showMsg(`摸摸 ${pet.name}，牠開心地笑了一下～ ❤️`);
+            updateUI();
+            saveData();
+        }
+
+        // 餵食功能
+        function openFeedMenu() {
+            if (pet.isSleeping) { showMsg('睡覺中不能吃東西唷！'); return; }
+            document.getElementById('feed-modal').classList.remove('hidden');
+        }
+        function closeFeedMenu() {
+            document.getElementById('feed-modal').classList.add('hidden');
+        }
+        function feedPet(amount, foodName) {
+            pet.hunger = Math.min(100, pet.hunger + amount);
+            pet.clean = Math.max(0, pet.clean - 5); // 吃完有點掉清潔
+            showMsg(`${pet.name} 吃完了 ${foodName}，好滿足！`);
+            closeFeedMenu();
+            updateUI();
+            saveData();
+        }
+
+        // 睡覺功能
+        function toggleSleep() {
+            pet.isSleeping = !pet.isSleeping;
+            if (pet.isSleeping) {
+                showMsg(`${pet.name} 睡著了，體力正在恢復中... 🌙`);
+            } else {
+                showMsg(`${pet.name} 睡醒啦！精神飽滿！☀️`);
+            }
+            updateUI();
+            saveData();
+        }
+
+        // 打掃功能
+        function cleanPoop() {
+            pet.clean = 100;
+            pet.happy = Math.min(100, pet.happy + 5);
+            showMsg(`環境整理乾淨溜溜！${pet.name} 超開心✨`);
+            updateUI();
+            saveData();
+        }
+
+        // 顯示對話訊息
+        function showMsg(text) {
+            document.getElementById('pet-message').innerText = text;
+        }
+
+        // 時間流逝數值自動扣減與睡眠恢復
+        setInterval(() => {
+            if (pet.isSleeping) {
+                pet.energy = Math.min(100, pet.energy + 5);
+                pet.hunger = Math.max(0, pet.hunger - 1);
+            } else {
+                pet.hunger = Math.max(0, pet.hunger - 2);
+                pet.happy = Math.max(0, pet.happy - 1);
+                pet.energy = Math.max(0, pet.energy - 2);
+                pet.clean = Math.max(0, pet.clean - 1);
+            }
+            updateUI();
+            saveData();
+        }, 10000); // 每 10 秒扣一次
+
+        // 接星星小遊戲
+        let gameInterval = null;
+        let gameScore = 0;
+        function startMiniGame() {
+            if (pet.isSleeping) { showMsg('睡覺中不能玩遊戲唷！'); return; }
+            
+            const container = document.getElementById('game-canvas-container');
+            container.style.display = 'block';
+            gameScore = 0;
+            document.getElementById('game-score').innerText = gameScore;
+            showMsg('🎮 小遊戲開始！快點擊落下的小星星！');
+
+            // 清除舊的星星
+            container.querySelectorAll('.falling-item').forEach(e => e.remove());
+
+            // 產生星星計時器
+            gameInterval = setInterval(() => {
+                if(container.querySelectorAll('.falling-item').length > 5) return;
+                const star = document.createElement('div');
+                star.className = 'falling-item';
+                star.innerText = '⭐';
+                star.style.left = Math.random() * 80 + '%';
+                star.style.top = '20px';
+                
+                star.onclick = () => {
+                    gameScore += 10;
+                    document.getElementById('game-score').innerText = gameScore;
+                    star.remove();
+                };
+
+                container.appendChild(star);
+
+                // 讓星星往下掉
+                let topPos = 20;
+                let fallTimer = setInterval(() => {
+                    topPos += 3;
+                    star.style.top = topPos + 'px';
+                    if (topPos > 140) {
+                        clearInterval(fallTimer);
+                        star.remove();
+                    }
+                }, 50);
+            }, 800);
+
+            // 10 秒後結束遊戲
+            setTimeout(() => {
+                clearInterval(gameInterval);
+                container.querySelectorAll('.falling-item').forEach(e => e.remove());
+                container.style.display = 'none';
+                pet.happy = Math.min(100, pet.happy + Math.floor(gameScore / 10));
+                showMsg(`遊戲結束！獲得了 ${gameScore} 分，快樂值大提升！🎉`);
+                updateUI();
+                saveData();
+            }, 10000);
+        }
+
+        // LocalStorage 儲存與讀取
+        function saveData() {
+            localStorage.setItem('my_pet_data', JSON.stringify(pet));
+        }
+
+        window.onload = function() {
+            const savedData = localStorage.getItem('my_pet_data');
+            if (savedData) {
+                pet = JSON.parse(savedData);
+                document.documentElement.style.setProperty('--primary-color', pet.primaryColor);
+                document.documentElement.style.setProperty('--secondary-color', pet.secondaryColor);
+                document.documentElement.style.setProperty('--bg-color', pet.bgColor);
+
+                document.getElementById('setup-screen').classList.add('hidden');
+                document.getElementById('main-screen').classList.remove('hidden');
+                updateUI();
+                showMsg(`歡迎回來！ ${pet.name} 一直在等你唷～`);
+            }
+        };
+    </script>
+</body>
+</html>
